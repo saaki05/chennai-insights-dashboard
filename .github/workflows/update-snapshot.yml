@@ -6,9 +6,18 @@ on:
     # is the target cadence the static frontend's forecast horizons assume.
     - cron: "*/15 * * * *"
   workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "backend/**"
+      - "config/**"
+      - "scripts/**"
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: update-snapshot
@@ -30,10 +39,23 @@ jobs:
       - name: Generate snapshot
         run: python scripts/generate_static_site.py
 
-      - name: Commit and push if changed
+      - name: Commit and push refreshed data if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/data/
           git diff --cached --quiet || git commit -m "chore: refresh static traffic snapshot [skip ci]"
           git push
+
+      # Deployed directly from this workflow run (not the legacy
+      # branch-webhook build) so every run — including the data-refresh
+      # commit just made above — always produces a fresh, matching deploy.
+      # A push authored by GITHUB_TOKEN doesn't reliably re-trigger the
+      # separate legacy Pages build, which is what caused stale deploys.
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - uses: actions/deploy-pages@v4

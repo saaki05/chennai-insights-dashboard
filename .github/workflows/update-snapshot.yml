@@ -1,0 +1,39 @@
+name: Update static traffic snapshot
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub may delay scheduled runs under load, but this
+    # is the target cadence the static frontend's forecast horizons assume.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-snapshot
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements-static.txt
+
+      - name: Generate snapshot
+        run: python scripts/generate_static_site.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/
+          git diff --cached --quiet || git commit -m "chore: refresh static traffic snapshot [skip ci]"
+          git push

@@ -1,0 +1,5 @@
+# Minimal dependency set for scripts/generate_static_site.py, used by the
+# GitHub Actions workflow (no FastAPI/uvicorn/aiosqlite needed here — those
+# are only for the live server in backend/, see requirements.txt).
+numpy==2.1.1
+scikit-learn==1.5.2

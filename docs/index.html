@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real-Time Chennai Insights Dashboard</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <div class="brand-text">
+        <h1>Chennai<span class="brand-accent">Pulse</span></h1>
+        <span class="subtitle">Traffic insights &middot; DBSCAN hotspot clustering &middot; GitHub Pages + Actions, refreshed every 15 min</span>
+      </div>
+    </div>
+    <div class="topbar-controls">
+      <span id="conn-status" class="status-pill status-connecting"><span class="status-dot"></span>loading</span>
+      <span id="clock" class="clock">--:--:--</span>
+      <button id="heat-toggle" class="btn">Heatmap</button>
+    </div>
+  </header>
+
+  <main id="layout">
+    <section id="map-panel">
+      <div id="map"></div>
+
+      <div id="legend" class="glass">
+        <div class="legend-title">Congestion level</div>
+        <div class="legend-row"><span class="swatch" style="background:var(--green)"></span>Free flow</div>
+        <div class="legend-row"><span class="swatch" style="background:var(--yellow)"></span>Moderate</div>
+        <div class="legend-row"><span class="swatch" style="background:var(--orange)"></span>High</div>
+        <div class="legend-row"><span class="swatch" style="background:var(--red)"></span>Severe</div>
+        <div class="legend-row"><span class="swatch ring"></span>Hotspot cluster</div>
+      </div>
+
+      <div id="diagnostics" class="glass">
+        <div class="legend-title">Model diagnostics</div>
+        <div class="diag-row"><span>Clustering</span><span id="diag-algo">DBSCAN (haversine)</span></div>
+        <div class="diag-row"><span>Adaptive eps</span><span id="diag-eps">–</span></div>
+        <div class="diag-row"><span>min_samples</span><span id="diag-minpts">–</span></div>
+        <div class="diag-row"><span>Points clustered</span><span id="diag-points">–</span></div>
+        <div class="diag-row"><span>Noise ratio</span><span id="diag-noise">–</span></div>
+        <div class="diag-row"><span>Mean cohesion</span><span id="diag-cohesion">–</span></div>
+        <div class="diag-row"><span>Snapshot age</span><span id="diag-age">–</span></div>
+      </div>
+    </section>
+
+    <aside id="sidebar">
+      <div class="card" id="freshness-card">
+        <h2>Data freshness</h2>
+        <p class="muted" style="margin-top:0;">
+          This is a static deployment on GitHub Pages: a GitHub Actions job
+          re-runs the live simulation + clustering engine every 15 minutes
+          and commits the result. No server is running, so this is
+          near-real-time rather than second-by-second. Snapshot generated
+          <b id="generated-at">–</b>.
+        </p>
+      </div>
+
+      <div class="card" id="stats-card">
+        <h2>City snapshot</h2>
+        <div class="stat-grid">
+          <div class="stat">
+            <span class="stat-value" id="stat-avg">--</span>
+            <span class="stat-label">Avg congestion</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-hotspots">--</span>
+            <span class="stat-label">Active hotspots</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-incidents">--</span>
+            <span class="stat-label">Incidents</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-tick">--</span>
+            <span class="stat-label">Snapshots generated</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="hotspots-card">
+        <h2>Top hotspots</h2>
+        <ul id="hotspot-list" class="list"></ul>
+      </div>
+
+      <div class="card" id="forecast-card">
+        <h2>Road forecast</h2>
+        <select id="road-select"></select>
+        <div class="chart-wrap"><canvas id="road-chart" height="150"></canvas></div>
+        <div id="forecast-note" class="muted"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="static/js/map.js"></script>
+<script src="static/js/charts.js"></script>
+<script src="static/js/app.js"></script>
+</body>
+</html>

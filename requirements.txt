@@ -1,0 +1,11 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+scikit-learn==1.5.2
+numpy==2.1.1
+pandas==2.2.3
+pydantic==2.9.2
+python-dotenv==1.0.1
+aiosqlite==0.20.0
+jupyter==1.1.1
+matplotlib==3.9.2
+seaborn==0.13.2

@@ -1,0 +1,75 @@
+"""
+Real-world Chennai junction/zone coordinates and the arterial road segments
+connecting them. This is the ground-truth spatial network the simulator
+generates synthetic GPS/traffic pings against, and the map the coordinates
+are safe to publish/republish (no personal data, all public landmarks).
+"""
+
+# Real Chennai landmarks/junctions: (id, name, lat, lon, zone_type)
+# zone_type informs baseline traffic behaviour (IT corridor peaks differently
+# from a residential zone or a rail-station interchange).
+ZONES = [
+    {"id": "koyambedu",       "name": "Koyambedu",              "lat": 13.0694, "lon": 80.1948, "type": "transit_hub"},
+    {"id": "anna_nagar",      "name": "Anna Nagar Roundtana",    "lat": 13.0850, "lon": 80.2101, "type": "residential"},
+    {"id": "t_nagar",         "name": "T Nagar (Panagal Park)",  "lat": 13.0418, "lon": 80.2341, "type": "commercial"},
+    {"id": "egmore",          "name": "Egmore Station",          "lat": 13.0732, "lon": 80.2609, "type": "transit_hub"},
+    {"id": "central",         "name": "Chennai Central",         "lat": 13.0827, "lon": 80.2757, "type": "transit_hub"},
+    {"id": "guindy",          "name": "Guindy Junction",         "lat": 13.0067, "lon": 80.2206, "type": "commercial"},
+    {"id": "adyar",           "name": "Adyar Signal",            "lat": 13.0012, "lon": 80.2565, "type": "residential"},
+    {"id": "velachery",       "name": "Velachery",               "lat": 12.9791, "lon": 80.2212, "type": "commercial"},
+    {"id": "tambaram",        "name": "Tambaram",                "lat": 12.9249, "lon": 80.1000, "type": "transit_hub"},
+    {"id": "sholinganallur",  "name": "Sholinganallur (OMR)",    "lat": 12.9010, "lon": 80.2279, "type": "it_corridor"},
+    {"id": "siruseri",        "name": "Siruseri (OMR)",          "lat": 12.8232, "lon": 80.2263, "type": "it_corridor"},
+    {"id": "porur",           "name": "Porur",                   "lat": 13.0381, "lon": 80.1564, "type": "residential"},
+    {"id": "vadapalani",      "name": "Vadapalani",              "lat": 13.0503, "lon": 80.2121, "type": "commercial"},
+    {"id": "perambur",        "name": "Perambur",                "lat": 13.1141, "lon": 80.2329, "type": "residential"},
+    {"id": "mylapore",        "name": "Mylapore",                "lat": 13.0339, "lon": 80.2619, "type": "residential"},
+    {"id": "nungambakkam",    "name": "Nungambakkam",            "lat": 13.0604, "lon": 80.2427, "type": "commercial"},
+    {"id": "thiruvanmiyur",   "name": "Thiruvanmiyur (ECR)",     "lat": 12.9830, "lon": 80.2594, "type": "residential"},
+    {"id": "perungudi",       "name": "Perungudi (OMR)",         "lat": 12.9635, "lon": 80.2422, "type": "it_corridor"},
+    {"id": "chromepet",       "name": "Chromepet (GST Rd)",      "lat": 12.9516, "lon": 80.1462, "type": "residential"},
+    {"id": "ambattur",        "name": "Ambattur",                "lat": 13.1143, "lon": 80.1548, "type": "industrial"},
+    {"id": "poonamallee",     "name": "Poonamallee",             "lat": 13.0475, "lon": 80.1097, "type": "residential"},
+    {"id": "teynampet",       "name": "Teynampet (Anna Salai)",  "lat": 13.0455, "lon": 80.2497, "type": "commercial"},
+    {"id": "airport",         "name": "Chennai Airport (GST)",   "lat": 12.9941, "lon": 80.1709, "type": "transit_hub"},
+]
+
+# Arterial road segments (edges) between zones, tagged with a road category.
+# category drives base capacity/congestion behaviour in the simulator.
+ROADS = [
+    {"id": "r1",  "name": "Anna Salai (Mount Road)",       "from": "teynampet",     "to": "guindy",         "category": "arterial"},
+    {"id": "r2",  "name": "Anna Salai Extension",           "from": "central",       "to": "teynampet",      "category": "arterial"},
+    {"id": "r3",  "name": "GST Road",                       "from": "guindy",        "to": "chromepet",      "category": "highway"},
+    {"id": "r4",  "name": "GST Road South",                 "from": "chromepet",     "to": "tambaram",       "category": "highway"},
+    {"id": "r5",  "name": "GST Road / Airport Link",         "from": "chromepet",     "to": "airport",        "category": "highway"},
+    {"id": "r6",  "name": "OMR (IT Corridor)",               "from": "perungudi",     "to": "sholinganallur", "category": "it_corridor"},
+    {"id": "r7",  "name": "OMR South",                       "from": "sholinganallur","to": "siruseri",       "category": "it_corridor"},
+    {"id": "r8",  "name": "Velachery-Taramani Link",         "from": "velachery",     "to": "perungudi",      "category": "arterial"},
+    {"id": "r9",  "name": "Velachery Main Road",             "from": "guindy",        "to": "velachery",      "category": "arterial"},
+    {"id": "r10", "name": "ECR (East Coast Road)",           "from": "thiruvanmiyur", "to": "sholinganallur", "category": "highway"},
+    {"id": "r11", "name": "LB Road (Adyar)",                 "from": "adyar",         "to": "thiruvanmiyur",  "category": "arterial"},
+    {"id": "r12", "name": "Lattice Bridge Road",              "from": "mylapore",      "to": "adyar",          "category": "arterial"},
+    {"id": "r13", "name": "TTK Road",                         "from": "teynampet",     "to": "mylapore",       "category": "arterial"},
+    {"id": "r14", "name": "Poonamallee High Road",            "from": "central",       "to": "koyambedu",      "category": "arterial"},
+    {"id": "r15", "name": "Poonamallee Bypass",               "from": "koyambedu",     "to": "poonamallee",    "category": "highway"},
+    {"id": "r16", "name": "Mount Poonamallee Road",           "from": "porur",         "to": "koyambedu",      "category": "arterial"},
+    {"id": "r17", "name": "Arcot Road",                       "from": "vadapalani",    "to": "porur",          "category": "arterial"},
+    {"id": "r18", "name": "Ring Road (Vadapalani-Koyambedu)", "from": "vadapalani",    "to": "koyambedu",      "category": "ring_road"},
+    {"id": "r19", "name": "Anna Nagar 2nd Ave",               "from": "anna_nagar",    "to": "koyambedu",      "category": "arterial"},
+    {"id": "r20", "name": "Anna Nagar-Perambur Link",         "from": "anna_nagar",    "to": "perambur",       "category": "arterial"},
+    {"id": "r21", "name": "Egmore-Central Link",              "from": "egmore",        "to": "central",        "category": "arterial"},
+    {"id": "r22", "name": "Egmore-Nungambakkam Link",         "from": "egmore",        "to": "nungambakkam",   "category": "arterial"},
+    {"id": "r23", "name": "Nungambakkam High Road",           "from": "nungambakkam",  "to": "t_nagar",        "category": "arterial"},
+    {"id": "r24", "name": "Usman Road",                       "from": "t_nagar",       "to": "teynampet",      "category": "arterial"},
+    {"id": "r25", "name": "GN Chetty Road",                   "from": "t_nagar",       "to": "vadapalani",     "category": "arterial"},
+    {"id": "r26", "name": "Ambattur-Koyambedu Link",          "from": "ambattur",      "to": "koyambedu",      "category": "arterial"},
+    {"id": "r27", "name": "Inner Ring Road",                  "from": "guindy",        "to": "koyambedu",      "category": "ring_road"},
+    {"id": "r28", "name": "Velachery-Tambaram Link",          "from": "velachery",     "to": "tambaram",       "category": "arterial"},
+]
+
+ZONES_BY_ID = {z["id"]: z for z in ZONES}
+
+# Chennai's rough bounding box, used to clamp/validate any generated point.
+BOUNDS = {"min_lat": 12.80, "max_lat": 13.15, "min_lon": 80.05, "max_lon": 80.30}
+
+CENTER = {"lat": 13.0067, "lon": 80.2206}  # Guindy, roughly the geographic centroid

@@ -26,7 +26,7 @@ if str(ROOT) not in sys.path:
 from backend.clustering import HotspotParams, detect_hotspots
 from backend.forecasting import RoadHistory
 from backend.simulator import TrafficSimulator
-from config.chennai_network import BOUNDS, CENTER, ROADS, ZONES
+from config.chennai_network import BOUNDS, CENTER, ROADS, ZONES, road_geometry
 
 DATA_DIR = ROOT / "docs" / "data"
 HISTORY_MAX_POINTS_PER_ROAD = 150  # ~ 37 hours of history at a 15-min cadence
@@ -84,9 +84,10 @@ def main():
     avg_congestion = round(sum(p["congestion"] for p in pings) / len(pings), 3) if pings else None
     max_congestion = round(max((p["congestion"] for p in pings), default=0), 3)
 
+    roads_with_geometry = [{**r, "geometry": road_geometry(r)} for r in ROADS]
     meta = {
         "zones": ZONES,
-        "roads": ROADS,
+        "roads": roads_with_geometry,
         "bounds": BOUNDS,
         "center": CENTER,
         "update_interval_minutes": 15,

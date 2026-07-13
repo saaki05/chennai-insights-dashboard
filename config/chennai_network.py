@@ -4,6 +4,8 @@ connecting them. This is the ground-truth spatial network the simulator
 generates synthetic GPS/traffic pings against, and the map the coordinates
 are safe to publish/republish (no personal data, all public landmarks).
 """
+import json
+from pathlib import Path
 
 # Real Chennai landmarks/junctions: (id, name, lat, lon, zone_type)
 # zone_type informs baseline traffic behaviour (IT corridor peaks differently
@@ -68,6 +70,35 @@ ROADS = [
 ]
 
 ZONES_BY_ID = {z["id"]: z for z in ZONES}
+
+# Real driving-route geometry per road, fetched once via
+# scripts/fetch_road_geometries.py (OSRM public routing API, free/no key)
+# and cached here so the app never depends on a live network call. Falls
+# back to a straight junction-to-junction line for any road missing from
+# the cache (e.g. before the fetch script has been run).
+_GEOMETRY_PATH = Path(__file__).resolve().parent / "road_geometries.json"
+
+
+def _load_road_geometries() -> dict[str, list[list[float]]]:
+    if _GEOMETRY_PATH.exists():
+        try:
+            return json.loads(_GEOMETRY_PATH.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {}
+
+
+ROAD_GEOMETRIES = _load_road_geometries()
+
+
+def road_geometry(road: dict) -> list[list[float]]:
+    """Real [lat, lon] polyline for a road, falling back to a straight line
+    between its two zones if no cached geometry exists for it."""
+    cached = ROAD_GEOMETRIES.get(road["id"])
+    if cached and len(cached) >= 2:
+        return cached
+    a, b = ZONES_BY_ID[road["from"]], ZONES_BY_ID[road["to"]]
+    return [[a["lat"], a["lon"]], [b["lat"], b["lon"]]]
 
 # Chennai's rough bounding box, used to clamp/validate any generated point.
 BOUNDS = {"min_lat": 12.80, "max_lat": 13.15, "min_lon": 80.05, "max_lon": 80.30}

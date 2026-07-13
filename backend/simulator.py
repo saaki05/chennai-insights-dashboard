@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Literal
 
-from config.chennai_network import ROADS, ZONES_BY_ID
+from config.chennai_network import ROADS, ZONES_BY_ID, road_geometry
 
 # Points generated per km of road segment (keeps dense roads denser).
 POINTS_PER_KM = 2.2
@@ -144,21 +144,41 @@ class TrafficSimulator:
 
     # -- core generation ------------------------------------------------
     def _segment_points(self, road: dict) -> list[tuple[float, float, float]]:
-        """Interpolated (lat, lon, frac) points along a road segment."""
-        a, b = ZONES_BY_ID[road["from"]], ZONES_BY_ID[road["to"]]
-        dist_km = _haversine_km(a["lat"], a["lon"], b["lat"], b["lon"])
-        n = max(3, round(dist_km * POINTS_PER_KM))
+        """Interpolated (lat, lon, frac) points along a road's *real*
+        driving-route geometry (from config/road_geometries.json, fetched
+        via OSRM — see scripts/fetch_road_geometries.py), not a straight
+        line between its two junctions. This is what makes the map's
+        traffic overlay actually hug real streets instead of floating
+        along an abstract straight segment."""
+        polyline = road_geometry(road)
+        seg_lengths = [
+            _haversine_km(polyline[i][0], polyline[i][1], polyline[i + 1][0], polyline[i + 1][1])
+            for i in range(len(polyline) - 1)
+        ]
+        total_km = sum(seg_lengths) or 0.001
+        n = max(3, round(total_km * POINTS_PER_KM))
+
         pts = []
         for i in range(n):
             frac = i / max(n - 1, 1)
-            lat = a["lat"] + (b["lat"] - a["lat"]) * frac
-            lon = a["lon"] + (b["lon"] - a["lon"]) * frac
-            # Small perpendicular jitter so points don't sit dead-straight
-            # (real GPS traces wander within lane width / road curvature).
-            jitter = self._rng.uniform(-0.0006, 0.0006)
-            lat += jitter
-            lon += jitter * 0.6
-            pts.append((lat, lon, frac))
+            target_km = frac * total_km
+
+            cum = 0.0
+            lat, lon = polyline[-1]
+            for seg_i, seg_len in enumerate(seg_lengths):
+                if cum + seg_len >= target_km or seg_i == len(seg_lengths) - 1:
+                    local_frac = (target_km - cum) / seg_len if seg_len > 0 else 0.0
+                    local_frac = max(0.0, min(1.0, local_frac))
+                    (lat1, lon1), (lat2, lon2) = polyline[seg_i], polyline[seg_i + 1]
+                    lat = lat1 + (lat2 - lat1) * local_frac
+                    lon = lon1 + (lon2 - lon1) * local_frac
+                    break
+                cum += seg_len
+
+            # Tiny jitter for GPS-noise realism (real geometry already
+            # supplies the road's actual curvature, so this stays small).
+            jitter = self._rng.uniform(-0.00015, 0.00015)
+            pts.append((lat + jitter, lon + jitter * 0.6, frac))
         return pts
 
     def tick(self, dt: datetime | None = None) -> list[dict]:

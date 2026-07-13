@@ -1,7 +1,9 @@
 // Leaflet + OpenStreetMap map layer management (free, no API key required).
 const ChennaiMap = (() => {
   let map, canvasRenderer;
-  let pointLayer, hotspotLayer, incidentLayer, heatLayer;
+  let roadLayer, pointLayer, hotspotLayer, incidentLayer, heatLayer;
+  let roadPolylines = {};
+  let roadMeta = {};
   let heatEnabled = false;
 
   const CONGESTION_COLORS = [
@@ -10,6 +12,8 @@ const ChennaiMap = (() => {
     { max: 0.75, color: "#e67e22" },
     { max: 1.01, color: "#e74c3c" },
   ];
+
+  const CATEGORY_WEIGHT = { highway: 6, ring_road: 5, arterial: 4, it_corridor: 4 };
 
   const INCIDENT_EMOJI = {
     accident: "🚧",
@@ -36,12 +40,53 @@ const ChennaiMap = (() => {
       maxZoom: 19,
     }).addTo(map);
 
+    // Layer order matters: roads (the primary "traffic layer", Google-Maps
+    // style colored lines that hug real streets) sit below the individual
+    // GPS-ping dots, hotspot rings, and incident icons.
+    roadLayer = L.layerGroup().addTo(map);
     pointLayer = L.layerGroup().addTo(map);
     hotspotLayer = L.layerGroup().addTo(map);
     incidentLayer = L.layerGroup().addTo(map);
     heatLayer = L.heatLayer([], { radius: 22, blur: 18, maxZoom: 15 });
 
     return map;
+  }
+
+  function initRoads(roads) {
+    roadLayer.clearLayers();
+    roadPolylines = {};
+    roadMeta = {};
+    roads.forEach((r) => {
+      if (!r.geometry || r.geometry.length < 2) return;
+      roadMeta[r.id] = r;
+      const line = L.polyline(r.geometry, {
+        renderer: canvasRenderer,
+        color: "#3a4a6b",
+        weight: CATEGORY_WEIGHT[r.category] || 4,
+        opacity: 0.55,
+        lineCap: "round",
+        lineJoin: "round",
+      });
+      line.bindTooltip(r.name, { sticky: true });
+      roadLayer.addLayer(line);
+      roadPolylines[r.id] = line;
+    });
+  }
+
+  function updateRoadTraffic(pings) {
+    const byRoad = {};
+    pings.forEach((p) => {
+      (byRoad[p.road_id] = byRoad[p.road_id] || []).push(p.congestion);
+    });
+    Object.entries(byRoad).forEach(([roadId, values]) => {
+      const line = roadPolylines[roadId];
+      if (!line) return;
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const color = colorFor(mean);
+      line.setStyle({ color, opacity: 0.5 + mean * 0.45 });
+      const name = (roadMeta[roadId] && roadMeta[roadId].name) || roadId;
+      line.setTooltipContent(`<b>${name}</b><br>${(mean * 100).toFixed(0)}% congestion`);
+    });
   }
 
   function toggleHeat(force) {
@@ -68,7 +113,7 @@ const ChennaiMap = (() => {
         // when zoomed out, without needing a legend lookup.
         pointLayer.addLayer(L.circleMarker([p.lat, p.lon], {
           renderer: canvasRenderer,
-          radius: 8,
+          radius: 7,
           color,
           weight: 0,
           fillColor: color,
@@ -78,11 +123,11 @@ const ChennaiMap = (() => {
 
       const marker = L.circleMarker([p.lat, p.lon], {
         renderer: canvasRenderer,
-        radius: severe ? 4 : 3.2,
+        radius: severe ? 3.5 : 2.2,
         color: severe ? "#fff" : color,
         weight: severe ? 1 : 0,
         fillColor: color,
-        fillOpacity: 0.92,
+        fillOpacity: severe ? 0.95 : 0.6,
       });
       marker.bindTooltip(
         `<b>${p.road_name}</b><br>Congestion: ${(p.congestion * 100).toFixed(0)}%<br>Speed: ${p.speed_kmph} km/h`,
@@ -149,5 +194,5 @@ const ChennaiMap = (() => {
     });
   }
 
-  return { init, updatePings, updateHotspots, updateIncidents, toggleHeat };
+  return { init, initRoads, updateRoadTraffic, updatePings, updateHotspots, updateIncidents, toggleHeat };
 })();

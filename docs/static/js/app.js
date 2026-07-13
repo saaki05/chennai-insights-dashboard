@@ -8,6 +8,7 @@ const POLL_MS = 20000;
 (async function () {
   const meta = await fetchJson("data/meta.json");
   ChennaiMap.init(meta.center);
+  ChennaiMap.initRoads(meta.roads);
   RoadChart.init("road-chart");
 
   const roadSelect = document.getElementById("road-select");
@@ -96,6 +97,7 @@ const POLL_MS = 20000;
       return;
     }
 
+    ChennaiMap.updateRoadTraffic(data.pings);
     ChennaiMap.updatePings(data.pings);
     ChennaiMap.updateHotspots(data.hotspots);
     ChennaiMap.updateIncidents(data.incidents || []);

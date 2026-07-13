@@ -30,7 +30,7 @@ from backend.clustering import HotspotParams, detect_hotspots, sweep_eps
 from backend.forecasting import RoadHistory
 from backend.simulator import TrafficSimulator
 from backend.ws_manager import ConnectionManager
-from config.chennai_network import BOUNDS, CENTER, ROADS, ZONES
+from config.chennai_network import BOUNDS, CENTER, ROADS, ZONES, road_geometry
 
 TICK_SECONDS = 3.0
 PERSIST_EVERY_N_TICKS = 7  # ~ every 21s
@@ -141,7 +141,8 @@ async def index():
 
 @app.get("/api/meta")
 async def meta():
-    return {"zones": ZONES, "roads": ROADS, "bounds": BOUNDS, "center": CENTER}
+    roads_with_geometry = [{**r, "geometry": road_geometry(r)} for r in ROADS]
+    return {"zones": ZONES, "roads": roads_with_geometry, "bounds": BOUNDS, "center": CENTER}
 
 
 @app.get("/api/snapshot")

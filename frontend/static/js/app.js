@@ -2,6 +2,7 @@
 (async function () {
   const meta = await fetch("/api/meta").then((r) => r.json());
   ChennaiMap.init(meta.center);
+  ChennaiMap.initRoads(meta.roads);
   RoadChart.init("road-chart");
 
   const roadSelect = document.getElementById("road-select");
@@ -85,6 +86,7 @@
 
   LiveFeed.onMessage((data) => {
     if (data.type !== "snapshot") return;
+    ChennaiMap.updateRoadTraffic(data.pings);
     ChennaiMap.updatePings(data.pings);
     ChennaiMap.updateHotspots(data.hotspots);
     ChennaiMap.updateIncidents(data.incidents);
